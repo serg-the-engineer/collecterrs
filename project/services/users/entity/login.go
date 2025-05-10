@@ -48,14 +48,8 @@ func MakeLogin(r *otp.GenerateCodeResp) *Login {
 // MakeLoginPbToEntity создает объект из pb.LoginReq в LoginReq
 func MakeLoginPbToEntity(req *pb.LoginReq) *LoginReq {
 	return &LoginReq{
-		Phone: req.Phone,
-		Device: &DeviceInfo{
-			InstallationID: req.DeviceInfo.InstallationID,
-			AppVersion:     req.DeviceInfo.AppVersion,
-			DeviceModel:    req.DeviceInfo.DeviceModel,
-			SystemType:     req.DeviceInfo.SystemType,
-			SystemVersion:  req.DeviceInfo.SystemVersion,
-		},
+		Phone:  req.Phone,
+		Device: &DeviceInfo{},
 	}
 }
 

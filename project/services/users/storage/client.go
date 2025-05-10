@@ -22,7 +22,7 @@ func (c *DummyClient) CreateUser(ctx context.Context, phone string, status int) 
 }
 
 func (c *DummyClient) GetUser(ctx context.Context, phone string) (*db.User, error) {
-	if phone >= "1" {
+	if len(phone) > 3 {
 		return &db.User{
 			Phone:  phone,
 			Status: true,

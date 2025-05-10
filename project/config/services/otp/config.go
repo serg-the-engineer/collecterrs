@@ -27,12 +27,12 @@ func ApplicationDefault() *Application {
 		Debug:       true,
 		Environment: "dev",
 
-		MaxAttempts:   4,
+		MaxAttempts:   2,
 		MaxCodeChecks: 3,
 
-		NewAttemptDelay: 60 * time.Second,
-		CodeTTL:         60 * time.Second,
-		OtpRequestTTL:   60 * 60 * time.Second,
+		NewAttemptDelay: 30 * time.Second,
+		CodeTTL:         30 * time.Second,
+		OtpRequestTTL:   3 * 60 * time.Second,
 	}
 }
 

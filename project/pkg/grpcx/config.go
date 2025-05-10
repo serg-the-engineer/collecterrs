@@ -9,7 +9,7 @@ const (
 	CfgDefaultHost                  = "localhost"
 	CfgDefaultHostKube              = "0.0.0.0"
 	CfgDefaultPort                  = "50051"
-	CfgDefaultReflection            = false
+	CfgDefaultReflection            = true
 	CfgDefaultMaxConnectionIdle     = 5 * time.Minute
 	CfgDefaultMaxConnectionAge      = 2 * time.Hour
 	CfgDefaultMaxConnectionAgeGrace = 5 * time.Minute

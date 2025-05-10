@@ -14,12 +14,12 @@ func (u *useCasesImpl) GenerateCode(ctx context.Context, req *entity.GenerateCod
 	//return nil, errsOtp.MaxAttemptsExceededError
 	var otpRequest *otp.Request
 
-	otpRequest, err := u.Providers.ProviderOtp.GetOtpRequestByAction(ctx, "owner", req.Action)
+	otpRequest, err := u.Providers.ProviderOtp.GetOtpRequestByAction(ctx, "user", req.Action)
 	if err != nil {
 		return nil, err
 	}
 	if otpRequest == nil {
-		otpRequest, err = u.Providers.ProviderOtp.CreateNewOtp(ctx, "owner", req.Action, req.Payload)
+		otpRequest, err = u.Providers.ProviderOtp.CreateNewOtp(ctx, "user", req.Action, req.Payload)
 		if err != nil {
 			return nil, err
 		}
@@ -27,7 +27,7 @@ func (u *useCasesImpl) GenerateCode(ctx context.Context, req *entity.GenerateCod
 		otpRequest, err = u.Providers.ProviderOtp.CreateNewAttempt(ctx, otpRequest)
 		if err != nil {
 			if errors.Is(err, otp.ErrMaxAttemptsExceeded) {
-				return nil, errsOtp.MaxAttemptsExceededError
+				return nil, errsOtp.MaxAttemptsExceededError.WithDetails(map[string]string{"max": "не более 3х попыток!"})
 			}
 			if errors.Is(err, otp.ErrNewAttemptTimeNotExceeded) {
 				return nil, errsOtp.NewAttemptTimeNotExceededError
