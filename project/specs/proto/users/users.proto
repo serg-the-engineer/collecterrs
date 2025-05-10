@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package users;
+
+option go_package = "specs/proto/users";
+
+service Users {
+  rpc HealthCheck (HealthCheckReq) returns (HealthCheckResp); // Сгенерированный метод, не изменяйте его.
+
+  rpc Login(LoginReq) returns (LoginResp);
+  rpc ConfirmLogin(ConfirmLoginReq) returns (ConfirmLoginResp);
+}
+
+message HealthCheckReq {}
+
+message HealthCheckResp {
+  bool status = 1;
+}
+
+message DeviceInfo {
+  string installationID = 1;
+  string appVersion = 2;
+  string deviceModel = 3;
+  string systemType = 4;
+  string systemVersion = 5;
+}
+
+message LoginReq {
+  string phone = 1;
+  DeviceInfo deviceInfo = 2;
+}
+
+message LoginResp {
+  string attemptID = 1;
+  int32 retryTime = 2;
+}
+
+message ConfirmLoginReq {
+  string attemptID = 1;
+  string code = 2;
+}
+
+message Token {
+  string access = 1;
+  string refresh = 2;
+}
+message ConfirmLoginResp {
+  Token token = 1;
+  string nextStep = 2;
+}

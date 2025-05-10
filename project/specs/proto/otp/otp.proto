@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package otp;
+
+import "google/protobuf/any.proto";
+
+option go_package = "specs/proto/otp";
+
+service Otp {
+  rpc HealthCheck (HealthCheckReq) returns (HealthCheckResp); // Сгенерированный метод, не изменяйте его.
+  rpc GenerateCode (GenerateCodeReq) returns (GenerateCodeResp);
+  rpc GenerateRetryCode (GenerateRetryCodeReq) returns (GenerateCodeResp);
+  rpc ValidateCode (ValidateCodeReq) returns (ValidateCodeResp);
+}
+
+message HealthCheckReq {}
+
+message HealthCheckResp {
+  bool status = 1;
+}
+
+message GenerateCodeReq {
+  string action = 1;  // Действие, для которого запрашивается код
+  optional bytes payload = 10;  // Полезная нагрузка для обработки в вызывающем сервисе
+}
+
+message GenerateCodeResp {
+  string attempt_id = 1;
+  string code = 2;
+  int32 code_ttl = 3; // Время жизни кода в секундах
+  int32 code_checks_left = 4; // Количество возможных вводов кода для одной попытки
+  int32 attempts_left = 5;  // Количество возможных запросов нового кода до таймаута (не считая текущий)
+  int32 attempts_timeout = 6; // Время ожидания в секундах, после которого можно запросить новый код
+  int32 new_attempt_delay = 7; // Время до возможности запроса следующего запроса кода в секундах
+}
+
+message GenerateRetryCodeReq {
+  string attempt_id = 2;
+}
+
+message ValidateCodeReq {
+  string attempt_id = 1;
+  string code = 2;
+}
+
+message ValidateCodeResp {
+  bool success = 1;
+  int32 retries_left = 2;
+  string initiator = 3;
+  optional bytes payload = 10;  // Полезная нагрузка, переданная при запросе кода
+}
