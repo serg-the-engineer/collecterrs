@@ -22,8 +22,8 @@ func ProjectErrorInterceptor(
 ) (interface{}, error) {
 	resp, err := handler(ctx, req)
 	if err != nil {
-		var projectErr errs.Error
-		// Проверяем, является ли ошибка нашей кастомной ошибкой errs.Error
+		var projectErr errs.ServiceError
+		// Проверяем, является ли ошибка нашей кастомной ошибкой errs.ServiceError
 		if errors.As(err, &projectErr) {
 			// Если да, то преобразуем ее в gRPC статус
 			return resp, projectErr.GRPCStatus().Err()

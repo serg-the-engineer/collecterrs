@@ -5,6 +5,6 @@ import (
 )
 
 var (
-	UserNotFoundError = errs.ServiceError("UserNotFound", errs.TypeUserRelatedError, "Пользователь не найден")
-	UserBlockedError  = errs.ServiceError("UserBlocked", errs.TypeUserRelatedError, "Пользователь заблокирован")
+	UserNotFoundError = errs.NewServiceError("UserNotFound", errs.TypeUserRelatedError, "Пользователь не найден")
+	UserBlockedError  = errs.NewServiceError("UserBlocked", errs.TypeUserRelatedError, "Пользователь заблокирован")
 )

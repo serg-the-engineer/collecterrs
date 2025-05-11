@@ -11,7 +11,7 @@ import (
 	"your-company.com/project/specs/proto/otp"
 )
 
-const OtpActionLogin = "login"
+const OtpActionLogin = "login-"
 
 func (u *useCasesImpl) Login(ctx context.Context, req *entity.LoginReq) (*entity.Login, error) {
 	user, err := u.Providers.Storage.GetUser(ctx, req.Phone)
@@ -31,7 +31,7 @@ func (u *useCasesImpl) Login(ctx context.Context, req *entity.LoginReq) (*entity
 		return nil, fmt.Errorf("ошибка формирования payload для otp: %w", err)
 	}
 	otpReq := &otp.GenerateCodeReq{
-		Action:  OtpActionLogin,
+		Action:  OtpActionLogin + req.Phone,
 		Payload: otpPayload,
 	}
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"your-company.com/project/errs/errsOtp"
 	"your-company.com/project/errs/errsUsers"
 
 	pb "your-company.com/project/specs/proto/otp"
@@ -20,6 +21,9 @@ func (u *useCasesImpl) ConfirmLogin(ctx context.Context, req *entity.ConfirmLogi
 
 	resp, err := u.Providers.Otp.ValidateCode(ctx, otpReq)
 	if err != nil {
+		if errsOtp.MaxCodeChecksExceededError.Is(err) {
+			return nil, errors.New("Невозможно провалидировать код")
+		}
 		return nil, err
 	}
 

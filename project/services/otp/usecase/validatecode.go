@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"fmt"
 	"your-company.com/project/errs/errsOtp"
 	"your-company.com/project/pkg/otp"
 
@@ -25,7 +26,8 @@ func (u *useCasesImpl) ValidateCode(ctx context.Context, req *entity.ValidateCod
 			return nil, errsOtp.InvalidCodeError
 		}
 		if errors.Is(err, otp.ErrMaxCodeChecksExceeded) {
-			return nil, errsOtp.MaxCodeChecksExceededError
+			return nil, errsOtp.MaxCodeChecksExceededError.
+				WithDetails(map[string]string{"max": fmt.Sprintf("%d", u.cfg.App.MaxCodeChecks)})
 		}
 		return nil, err
 	}

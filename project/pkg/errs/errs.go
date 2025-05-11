@@ -1,14 +1,6 @@
 // Package errs
 // для работы с ошибками, классификация и перехват причин ошибок.
 //
-// При классификации ошибок, связанных с логикой крайне рекомендуется упаковывать ошибки с помощью функций пакета.
-// Например:
-//
-//	err := someSearch()
-//	if err != nil {
-//		return errs.Wrapf(errs.ErrNotFound, err)
-//	}
-//
 // Для того, чтобы классифицированные ошибки могли быть перехвачены в любом слое приложения.
 //
 // Неупакованными можно оставлять системные ошибки, например сбой ввода, вывода, ошибка соединения и т.д...
@@ -21,7 +13,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-var _ error = (*Error)(nil)
+var _ error = (*ServiceError)(nil)
 
 // Type тип (класс) сбоя.
 type Type string
@@ -31,28 +23,26 @@ const (
 	TypeUserRelatedError Type = "USER_RELATED_ERROR"
 )
 
-// Error служит для классификации возникающих ошибок. Поддерживает интерфейс error. В месте возникновения нужно создать
+// ServiceError служит для классификации возникающих ошибок внутри бэкэнда. Поддерживает интерфейс error. В месте возникновения нужно создать
 // структуру ошибки с нужным кодом и типом. Далее эту ошибку можно перехватить с помощью стандартной библиотеки работы
 // с ошибками: errors.Is() и errors.As().
 //
 // Например:
 //
-//	err := errs.Error{Code: "MARK"} // такую ошибку можно вернуть из функции.
+//	err := errs.IncorrectBodyError  // такую ошибку можно вернуть из функции.
 //
-//	if errors.Is(err, errs.Error{Code: "MARK"}) {
+//	if errors.Is(err, errs.IncorrectBodyError) {
 //		// обрабатываем эту ошибку ...
 //	}
 //
-// Для создания необходимой ошибки, крайне рекомендуется пользоваться функциями хелперами или статическими ошибками
-// пакета errs или определенными в приложении.
-type Error struct {
+type ServiceError struct {
 	Code        string
 	Description string
 	Type        Type
 	Details     map[string]string
 }
 
-func (r Error) Error() string {
+func (r ServiceError) Error() string {
 	if r.Code == "" {
 		return string(r.Type)
 	}
@@ -60,13 +50,14 @@ func (r Error) Error() string {
 	return r.Code
 }
 
-func (r Error) WithDetails(details map[string]string) Error {
+func (r ServiceError) WithDetails(details map[string]string) ServiceError {
 	r.Details = details
 
 	return r
 }
 
 // Is проверяет, что аргумент типа error является эквивалентной ошибкой.
+// Применяется в том числе для проверки ответов из сервисов по GRPC
 // Например:
 //
 //	err := someSearch() // может вернуть errs.ErrNotFound
@@ -78,22 +69,23 @@ func (r Error) WithDetails(details map[string]string) Error {
 //	}
 //
 // .
-func (r Error) Is(err error) bool {
-	var target Error
+func (r ServiceError) Is(err error) bool {
+	var target ServiceError
 	if errors.As(err, &target) {
 		return r.Equals(target)
 	}
 
-	var targetPtr *Error
+	var targetPtr *ServiceError
 	if errors.As(err, &targetPtr) {
 		return targetPtr != nil && r.Equals(*targetPtr)
 	}
 
-	return false
+	s := BuildFromGRPCStatus(status.Convert(err))
+	return r.Equals(s)
 }
 
 // Equals проверяет, что описания ошибок равнозначны.
-func (r Error) Equals(v Error) bool {
+func (r ServiceError) Equals(v ServiceError) bool {
 	if r.Code != "" {
 		return r.Code == v.Code
 	}
@@ -101,9 +93,9 @@ func (r Error) Equals(v Error) bool {
 	return r.Type == v.Type
 }
 
-// ServiceError создает Error с указанным кодом и типом.
-func ServiceError(code string, t Type, description string) Error {
-	var err Error
+// NewServiceError создает ServiceError с указанным кодом и типом.
+func NewServiceError(code string, t Type, description string) ServiceError {
+	var err ServiceError
 	err.Code = code
 	err.Type = t
 	err.Description = description
@@ -111,8 +103,8 @@ func ServiceError(code string, t Type, description string) Error {
 	return err
 }
 
-// GRPCStatus() создает представление Error для передачи по GRPC
-func (r Error) GRPCStatus() *status.Status {
+// GRPCStatus() создает представление ServiceError для передачи по GRPC
+func (r ServiceError) GRPCStatus() *status.Status {
 	// Определяем код GRPC на основе типа ошибки
 	var code codes.Code
 	switch r.Type {
@@ -127,18 +119,105 @@ func (r Error) GRPCStatus() *status.Status {
 	// Создаем статус с кодом - описание и тип при желании мы можем получать по коду из project.errs
 	st := status.New(code, r.Code)
 
+	// Конвертируем детали в proto-совместимый формат
+	detailsProto := &structpb.Struct{
+		Fields: make(map[string]*structpb.Value),
+	}
+
+	// Добавляем описание как отдельное поле
+	if r.Description != "" {
+		detailsProto.Fields["_description"] = structpb.NewStringValue(r.Description)
+	}
+
 	// Если есть детали, добавляем их как дополнительную информацию
 	if len(r.Details) > 0 {
-		// Конвертируем детали в proto-совместимый формат
-		detailsProto := &structpb.Struct{
-			Fields: make(map[string]*structpb.Value),
-		}
 		for k, v := range r.Details {
 			detailsProto.Fields[k] = structpb.NewStringValue(v)
 		}
+	}
 
+	if len(detailsProto.Fields) > 0 {
 		st, _ = st.WithDetails(detailsProto)
 	}
 
 	return st
+}
+
+// BuildFromGRPCStatus создает ServiceError из представления GRPC Status
+func BuildFromGRPCStatus(st *status.Status) ServiceError {
+	if st == nil {
+		return ServiceError{}
+	}
+
+	// Определяем тип ошибки на основе кода GRPC
+	var errType Type
+	switch st.Code() {
+	case codes.InvalidArgument:
+		errType = TypeUserRelatedError
+	case codes.Internal:
+		errType = TypeInternalError
+	default:
+		errType = TypeInternalError
+	}
+
+	err := ServiceError{
+		Code: st.Message(),
+		Type: errType,
+	}
+
+	// Извлекаем детали из статуса, если они есть
+	details := st.Details()
+	if len(details) > 0 {
+		for _, detail := range details {
+			if s, ok := detail.(*structpb.Struct); ok {
+				// Создаем map для деталей, если он еще не создан
+				if err.Details == nil {
+					err.Details = make(map[string]string)
+				}
+
+				// Обрабатываем все поля
+				for k, v := range s.Fields {
+					if k == "_description" {
+						// Особая обработка для поля описания
+						err.Description = v.GetStringValue()
+					} else {
+						// Остальные поля добавляем в детали
+						err.Details[k] = v.GetStringValue()
+					}
+				}
+			}
+		}
+	}
+
+	return err
+}
+
+// Формат ошибок, отдающиеся вовне с гейтвеев
+type ServerError struct {
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Details map[string]string `json:"details,omitempty"`
+}
+
+func (r ServerError) Error() string {
+	if r.Code == "" {
+		return r.Message
+	}
+	return r.Code
+}
+
+func BuildFromServiceError(e ServiceError) ServerError {
+	se := ServerError{
+		Code:    e.Code,
+		Message: e.Description,
+	}
+	if e.Details != nil && len(e.Details) > 0 {
+		se.Details = e.Details
+	}
+	// для неименных ошибок сообщение пишется в Code, приводим к общему виду
+	if e.Description == "" {
+		se.Message = e.Code
+		se.Code = "InternalServiceError"
+	}
+	return se
 }

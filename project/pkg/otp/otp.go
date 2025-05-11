@@ -168,7 +168,7 @@ func (o *ProviderOtpImpl) CreateNewAttempt(ctx context.Context, otpRequest *Requ
 // В зависимости от результата вносит нужные изменения в кеш.
 func (o *ProviderOtpImpl) ValidateCode(ctx context.Context, otpRequest *Request, code string) (bool, error) {
 	if otpRequest.CodeValidUntil.Before(time.Now()) {
-		return false, ErrInvalidCode
+		return false, ErrAttemptNotFound
 	}
 	if otpRequest.CodeChecksCount >= o.Cfg.MaxCodeChecks {
 		return false, ErrMaxCodeChecksExceeded

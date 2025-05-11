@@ -10,7 +10,7 @@ const (
 	CfgDefaultReadHeaderTimeout = 30 * time.Second
 	CfgDefaultTimeout           = 3000 * time.Millisecond
 	CfgDefaultCacheTTL          = 300 * time.Second
-	CfgDefaultBaseURL           = "/api/"
+	CfgDefaultBaseURL           = "/api"
 	CfgDefaultMaxRate           = 10
 	CfgDefaultRatePeriod        = 1 * time.Minute
 	CfgDefaultCORSOrigins       = "*"
