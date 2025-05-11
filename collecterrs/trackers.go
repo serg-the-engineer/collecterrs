@@ -127,6 +127,37 @@ func NewErrorHandler() *ErrorHandler {
 
 func (eh *ErrorHandler) Inspect(node ast.Node, errtracker *ErrorVarTracker) {
 	if stmt, ok := node.(*ast.IfStmt); ok {
+		// Handle combined conditions with logical operators
+		if binExpr, ok := stmt.Cond.(*ast.BinaryExpr); ok {
+			// Handle pattern: err != nil && !errors.Is(err, errsUsers.UserNotFoundError)
+			if binExpr.Op == token.LAND {
+				// Check if the right side is a unary expression with '!' operator
+				if unaryExpr, ok := binExpr.Y.(*ast.UnaryExpr); ok && unaryExpr.Op == token.NOT {
+					// Check if the operand is an errors.Is call
+					if call, ok := unaryExpr.X.(*ast.CallExpr); ok && isErrorsIsCall(call) {
+						if len(call.Args) < 2 {
+							return
+						}
+						// Second argument of errors.Is is target
+						if targetCall, ok := call.Args[1].(*ast.SelectorExpr); ok {
+							if strings.HasSuffix(targetCall.Sel.Name, "Error") {
+								if ident, ok := targetCall.X.(*ast.Ident); ok && strings.HasPrefix(ident.Name, "errs") {
+									eh.handledErrors[strings.TrimSuffix(targetCall.Sel.Name, "Error")] = true
+								}
+							}
+						}
+
+						// If target is a variable (for example, err)
+						if targetIdent, ok := call.Args[1].(*ast.Ident); ok {
+							if code, exists := errtracker.errorVars[targetIdent.Name]; exists {
+								eh.handledErrors[code] = true
+							}
+						}
+					}
+				}
+			}
+		}
+
 		// Handle errors.Is(err, target)
 		if call, ok := stmt.Cond.(*ast.CallExpr); ok {
 			if isErrorsIsCall(call) {

@@ -35,7 +35,6 @@
       "UserBlocked"
     ],
     "Login": [
-      "UserNotFound",
       "otp.MaxAttemptsExceeded",
       "otp.NewAttemptTimeNotExceeded",
       "UserBlocked"
