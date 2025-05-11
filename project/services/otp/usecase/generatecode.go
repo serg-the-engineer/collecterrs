@@ -27,7 +27,7 @@ func (u *useCasesImpl) GenerateCode(ctx context.Context, req *entity.GenerateCod
 		otpRequest, err = u.Providers.ProviderOtp.CreateNewAttempt(ctx, otpRequest)
 		if err != nil {
 			if errors.Is(err, otp.ErrMaxAttemptsExceeded) {
-				return nil, errsOtp.MaxAttemptsExceededError.WithDetails(map[string]string{"max": "не более 3х попыток!"})
+				return nil, errsOtp.MaxAttemptsExceededError
 			}
 			if errors.Is(err, otp.ErrNewAttemptTimeNotExceeded) {
 				return nil, errsOtp.NewAttemptTimeNotExceededError

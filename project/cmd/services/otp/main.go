@@ -38,7 +38,7 @@ func run(ctx context.Context, cancel context.CancelFunc, cfg *otp.Config) error 
 	// Initialize Redis cache
 	redis, err := redis.NewClient(ctx, cfg.Redis)
 	if err != nil {
-		log.Fatalf("Failed to create Redis client: %v", err)
+		log.Fatalf("Failed to create Redis client: %w", err)
 	}
 	defer redis.Close(ctx)
 
@@ -63,7 +63,7 @@ func run(ctx context.Context, cancel context.CancelFunc, cfg *otp.Config) error 
 	service := server.NewServerOptions(useCases, cfg)
 	grpcServer, err := service.NewServer(cfg.GRPC)
 	if err != nil {
-		log.Fatalf("Failed to create gRPC Server: %v", err)
+		log.Fatalf("Failed to create gRPC Server: %w", err)
 	}
 
 	return grpcx.StartServer(ctx, cfg.GRPC, grpcServer)

@@ -170,18 +170,14 @@ func BuildFromGRPCStatus(st *status.Status) ServiceError {
 	if len(details) > 0 {
 		for _, detail := range details {
 			if s, ok := detail.(*structpb.Struct); ok {
-				// Создаем map для деталей, если он еще не создан
 				if err.Details == nil {
 					err.Details = make(map[string]string)
 				}
 
-				// Обрабатываем все поля
 				for k, v := range s.Fields {
 					if k == "_description" {
-						// Особая обработка для поля описания
 						err.Description = v.GetStringValue()
 					} else {
-						// Остальные поля добавляем в детали
 						err.Details[k] = v.GetStringValue()
 					}
 				}

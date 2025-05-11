@@ -1,0 +1,44 @@
+{
+  "dummy": {
+    "Cases": [
+      "Dummy",
+      "FromVar1",
+      "WithDetails (foo:string)",
+      "FromVar2",
+      "FromDepth",
+      "FromStorageUnhandled",
+      "otp.AttemptNotFound",
+      "otp.InvalidCode",
+      "otp.MaxCodeChecksExceeded (max:string)"
+    ]
+  },
+  "otp": {
+    "GenerateCode": [
+      "MaxAttemptsExceeded",
+      "NewAttemptTimeNotExceeded"
+    ],
+    "GenerateRetryCode": [
+      "AttemptNotFound",
+      "MaxAttemptsExceeded",
+      "NewAttemptTimeNotExceeded"
+    ],
+    "ValidateCode": [
+      "AttemptNotFound",
+      "InvalidCode",
+      "MaxCodeChecksExceeded (max:string)"
+    ]
+  },
+  "users": {
+    "ConfirmLogin": [
+      "otp.AttemptNotFound",
+      "otp.InvalidCode",
+      "UserBlocked"
+    ],
+    "Login": [
+      "UserNotFound",
+      "otp.MaxAttemptsExceeded",
+      "otp.NewAttemptTimeNotExceeded",
+      "UserBlocked"
+    ]
+  }
+}

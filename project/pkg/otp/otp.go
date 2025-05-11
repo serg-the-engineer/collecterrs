@@ -81,19 +81,19 @@ func (o *ProviderOtpImpl) GetOtpRequestByAttemptID(ctx context.Context, attemptI
 		if errors.Is(err, memorystore.ErrKeyNotFound) {
 			return nil, ErrAttemptNotFound
 		}
-		return nil, fmt.Errorf("ошибка получения данных otpAttempt из кеша: %v", err)
+		return nil, fmt.Errorf("ошибка получения данных otpAttempt из кеша: %w", err)
 	}
 	otpRequestKey, err := v.String()
 	if err != nil {
-		return nil, fmt.Errorf("невалидные данные otpAttempt получены из кеша: %v", err)
+		return nil, fmt.Errorf("невалидные данные otpAttempt получены из кеша: %w", err)
 	}
 	v, err = o.Redis.Get(ctx, otpRequestKey)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка получения данных otpRequest из кеша: %v", err)
+		return nil, fmt.Errorf("ошибка получения данных otpRequest из кеша: %w", err)
 	}
 	err = v.Struct(&otpRequest)
 	if err != nil {
-		return nil, fmt.Errorf("невалидные данные otpRequest получены из кеша: %v", err)
+		return nil, fmt.Errorf("невалидные данные otpRequest получены из кеша: %w", err)
 	}
 	if otpRequest.ValidUntil.Before(time.Now()) {
 		return nil, fmt.Errorf(
@@ -107,7 +107,7 @@ func (o *ProviderOtpImpl) GetOtpRequestByAttemptID(ctx context.Context, attemptI
 func (o *ProviderOtpImpl) CreateNewOtp(ctx context.Context, initiator, action string, payload []byte) (*Request, error) {
 	attemptID, err := uuid.NewV7()
 	if err != nil {
-		return nil, fmt.Errorf("ошибка генерации attemptID: %v", err)
+		return nil, fmt.Errorf("ошибка генерации attemptID: %w", err)
 	}
 
 	otpRequest := &Request{
@@ -143,7 +143,7 @@ func (o *ProviderOtpImpl) CreateNewAttempt(ctx context.Context, otpRequest *Requ
 	prevAttemptID := otpRequest.LastAttemptID
 	attemptID, err := uuid.NewV7()
 	if err != nil {
-		return nil, fmt.Errorf("ошибка генерации attemptID: %v", err)
+		return nil, fmt.Errorf("ошибка генерации attemptID: %w", err)
 	}
 
 	otpRequest.AttemptsCount++
@@ -192,7 +192,7 @@ func (o *ProviderOtpImpl) saveOtpRequest(ctx context.Context, otpRequest *Reques
 	otpRequestKey := fmt.Sprintf(otpRequestKeyFormat, otpRequest.Action, otpRequest.Initiator)
 	err := o.Redis.Set(ctx, otpRequestKey, otpRequest, o.Cfg.OtpRequestTTL)
 	if err != nil {
-		return fmt.Errorf("ошибка сохранения значения OtpRequest в redis: %v", err)
+		return fmt.Errorf("ошибка сохранения значения OtpRequest в redis: %w", err)
 	}
 
 	// устанавливаем связь с request для возможности делать retry по одному attemptID
@@ -200,7 +200,7 @@ func (o *ProviderOtpImpl) saveOtpRequest(ctx context.Context, otpRequest *Reques
 	// попытка живет дольше кода, чтобы можно было сделать retry просроченной
 	err = o.Redis.Set(ctx, attemptKey, otpRequestKey, o.Cfg.OtpRequestTTL)
 	if err != nil {
-		return fmt.Errorf("ошибка сохранения значения OtpAttempt в redis: %v", err)
+		return fmt.Errorf("ошибка сохранения значения OtpAttempt в redis: %w", err)
 	}
 	return nil
 }
@@ -238,7 +238,7 @@ func (o *ProviderOtpImpl) incrementCodeChecks(ctx context.Context, otpRequest *R
 	otpRequestKey := fmt.Sprintf(otpRequestKeyFormat, otpRequest.Action, otpRequest.Initiator)
 	err := o.Redis.Set(ctx, otpRequestKey, otpRequest, o.Cfg.OtpRequestTTL)
 	if err != nil {
-		return fmt.Errorf("ошибка сохранения значения в redis: %v", err)
+		return fmt.Errorf("ошибка сохранения значения в redis: %w", err)
 	}
 	return nil
 }
